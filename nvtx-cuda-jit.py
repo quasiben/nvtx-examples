@@ -11,11 +11,7 @@ def matmul(A, B, C):
         for k in range(A.shape[1]):
             cuda.syncthreads()
             tmp = tmp + A[i, k] * B[k, j]
-        # cuda.syncthreads()
         C[i, j] = tmp
-
-# @cuda.jit():
-# def _sync():
 
 
 np_A = np.random.random((10, 10))
