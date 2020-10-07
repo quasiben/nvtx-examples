@@ -1,0 +1,74 @@
+diff --git a/Objects/descrobject.c b/Objects/descrobject.c
+index 729f42c50c..36ec951330 100644
+--- a/Objects/descrobject.c
++++ b/Objects/descrobject.c
+@@ -6,6 +6,8 @@
+ #include "pycore_tupleobject.h"
+ #include "structmember.h" /* Why is this not included in Python.h? */
+ 
++#include "nvtx3/nvToolsExt.h"
++
+ /*[clinic input]
+ class mappingproxy "mappingproxyobject *" "&PyDictProxy_Type"
+ class property "propertyobject *" "&PyProperty_Type"
+@@ -140,6 +142,7 @@ method_get(PyMethodDescrObject *descr, PyObject *obj, PyObject *type)
+ static PyObject *
+ member_get(PyMemberDescrObject *descr, PyObject *obj, PyObject *type)
+ {
++    nvtxRangePushA("member-get");
+     PyObject *res;
+ 
+     if (descr_check((PyDescrObject *)descr, obj, &res))
+@@ -151,6 +154,7 @@ member_get(PyMemberDescrObject *descr, PyObject *obj, PyObject *type)
+             return NULL;
+         }
+     }
++    nvtxRangePop();
+ 
+     return PyMember_GetOne((char *)obj, descr->d_member);
+ }
+diff --git a/Objects/object.c b/Objects/object.c
+index 74b1b15d30..8e4fcc2f16 100644
+--- a/Objects/object.c
++++ b/Objects/object.c
+@@ -9,6 +9,8 @@
+ #include "frameobject.h"
+ #include "interpreteridobject.h"
+ 
++#include "nvtx3/nvToolsExt.h"
++
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+@@ -929,18 +931,23 @@ _PyObject_SetAttrId(PyObject *v, _Py_Identifier *name, PyObject *w)
+ PyObject *
+ PyObject_GetAttr(PyObject *v, PyObject *name)
+ {
++    nvtxRangePushA("PyObject-GetAttr");
++
+     PyTypeObject *tp = Py_TYPE(v);
+ 
+     if (!PyUnicode_Check(name)) {
+         PyErr_Format(PyExc_TypeError,
+                      "attribute name must be string, not '%.200s'",
+                      name->ob_type->tp_name);
++        nvtxRangePop();
+         return NULL;
+     }
+     if (tp->tp_getattro != NULL)
++        nvtxRangePop();
+         return (*tp->tp_getattro)(v, name);
+     if (tp->tp_getattr != NULL) {
+         const char *name_str = PyUnicode_AsUTF8(name);
++        nvtxRangePop();
+         if (name_str == NULL)
+             return NULL;
+         return (*tp->tp_getattr)(v, (char *)name_str);
+@@ -948,6 +955,7 @@ PyObject_GetAttr(PyObject *v, PyObject *name)
+     PyErr_Format(PyExc_AttributeError,
+                  "'%.50s' object has no attribute '%U'",
+                  tp->tp_name, name);
++    nvtxRangePop();
+     return NULL;
+ }
+ 

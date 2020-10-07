@@ -2,12 +2,13 @@ import cupy
 import nvtx
 
 
-
 # cuda context generation
 arr_x = cupy.array(1)
 
+
 def squared_diff(x, y):
     return (x - y) * (x - y)
+
 
 # warmup
 squared_diff(arr_x, arr_x)
@@ -26,4 +27,3 @@ with nvtx.annotate("square-diff", color="green"):
 
     with nvtx.annotate("faster compute", color="orange"):
         cupy.fuse(squared_diff(arr_x, arr_y))
-
